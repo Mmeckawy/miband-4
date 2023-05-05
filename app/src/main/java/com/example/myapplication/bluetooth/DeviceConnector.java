@@ -73,15 +73,8 @@ public class DeviceConnector {
 
     public void startBonding() {
         try {
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             Log.i(TAG, "Start Pairing... with: " + bluetoothDevice.getName());
             bluetoothDevice.createBond();
@@ -130,15 +123,8 @@ public class DeviceConnector {
 
         final int DISCOVERY_TIME_DELAY_IN_MS = 15000;
         new Handler().postDelayed(() -> {
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             bluetoothAdapter.getBluetoothLeScanner().stopScan(deviceScanCallback);
             searchProgressDialog.dismiss();
@@ -160,15 +146,8 @@ public class DeviceConnector {
 
         heartBeatMeasurer.updateBluetoothConfig(bluetoothGatt);
 //        successCallback.invoke(null, bluetoothGatt.getDevice().getBondState());
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
         Log.i(TAG, "LINKED DEVICE: " + bluetoothGatt.getDevice().getBondState());
 
@@ -177,15 +156,8 @@ public class DeviceConnector {
     //    @ReactMethod
     void disconnectDevice() {
         if (bluetoothGatt != null) {
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             bluetoothGatt.disconnect();
             bluetoothGatt = null;
@@ -203,15 +175,8 @@ public class DeviceConnector {
             Log.i(TAG, "getDeviceBondLevel: 00 NO IDEA");
         } else {
 //            successCallback.invoke(null, bluetoothGatt.getDevice().getBondState());
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             Log.i(TAG, "getDeviceBondLevel: " + bluetoothGatt.getDevice().getBondState());
         }
