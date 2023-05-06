@@ -147,7 +147,7 @@ public class GattCallback extends BluetoothGattCallback {
         switch (characteristic.getUuid().toString()) {
             case CHAR_AUTH: {
                 switch (Arrays.toString(charValue)) {
-                    case "[16, 1, 1]": {
+                    case "[16, 1, -127]": {
                         authChar.setValue(new byte[]{0x02, 0x00}); //4
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             checkBluetoothPermission();
@@ -160,7 +160,7 @@ public class GattCallback extends BluetoothGattCallback {
                         executeAuthorisationSequence(gatt, characteristic); //5
                         break;
                     }
-                    case "[16, 1, -127]": {
+                    case "[16, 3, 1]": {
                         Log.i("Ranu BLE", "Authentication has been passed successfully"); // 7
                         heartBeatMeasurer.updateHrChars(gatt);
                         infoReceiver = new InfoReceiver(this.context);
@@ -178,7 +178,7 @@ public class GattCallback extends BluetoothGattCallback {
 
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-        Log.i("INFO", "onCharacteristicRead uuid: " + characteristic.getUuid().toString()
+        Log.i("ranu", "onCharacteristicRead uuid: " + characteristic.getUuid().toString()
                 + " value: " + Arrays.toString(characteristic.getValue()) + " status: " + status);
         switch (characteristic.getUuid().toString()) {
             case CHAR_STEPS: {
@@ -199,10 +199,11 @@ public class GattCallback extends BluetoothGattCallback {
     public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         switch (characteristic.getUuid().toString()) {
             case CHAR_SENSOR: {
+                Log.d("ranu", "onCharacteristicWriteHR CHECK: " + Arrays.toString(characteristic.getValue()));
                 switch (Arrays.toString(characteristic.getValue())) {
                     // for real time HR measurement [1, 3, 19] was sent actually but [1, 3, 25]
                     // is written. Magic?
-                    case "[1,3,25]": {
+                    case "[1, 3, 25]": {
                         hrDescChar.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             checkBluetoothPermission();
@@ -222,10 +223,11 @@ public class GattCallback extends BluetoothGattCallback {
         switch (descriptor.getCharacteristic().getUuid().toString()) {
             case CHAR_AUTH: {
                 byte[] authKey = ArrayUtils.addAll(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, AUTH_CHAR_KEY);
-                authChar.setValue(authKey);             // 3
+                 authChar.setValue(authKey);             // 3
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     checkBluetoothPermission();
                 }
+                Log.d("ranu", "onDescriptorWrite: " + gatt.writeCharacteristic(authChar));
                 gatt.writeCharacteristic(authChar);     // 3
                 break;
             }
@@ -245,7 +247,7 @@ public class GattCallback extends BluetoothGattCallback {
 
     private void executeAuthorisationSequence(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         byte[] value = characteristic.getValue();
-        if (value[0] == 16 && value[1] == 1 && value[2] == 1) {
+        if (value[0] == 16 && value[1] == 1 && value[2] == -127) {
             characteristic.setValue(new byte[]{0x02, 0x8});
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 checkBluetoothPermission();

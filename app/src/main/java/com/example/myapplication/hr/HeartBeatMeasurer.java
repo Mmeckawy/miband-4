@@ -89,12 +89,14 @@ public class HeartBeatMeasurer {
         }
         btGatt.setCharacteristicNotification(hrCtrlChar, true);
         btGatt.setCharacteristicNotification(hrMeasureChar, true);
+        startHrCalculation();
     }
 
 
     public void handleHeartRateData(final BluetoothGattCharacteristic characteristic) {
         byte currentHrValue = characteristic.getValue()[1];
         heartRateValue = String.valueOf(currentHrValue);
+        Log.d(TAG, "HeartRateValue" + heartRateValue);
     }
 
 
