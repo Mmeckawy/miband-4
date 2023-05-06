@@ -45,27 +45,7 @@ import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-//
-//import static com.sbp.common.ModuleStorage.getModuleStorage;
-//import static com.sbp.common.UUIDs.AUTH_CHAR_KEY;
-//import static com.sbp.common.UUIDs.CHAR_AUTH;
-//import static com.sbp.common.UUIDs.CHAR_BATTERY;
-//import static com.sbp.common.UUIDs.CHAR_HEART_RATE_CONTROL;
-//import static com.sbp.common.UUIDs.CHAR_HEART_RATE_MEASURE;
-//import static com.sbp.common.UUIDs.CHAR_SENSOR;
-//import static com.sbp.common.UUIDs.CHAR_STEPS;
-//import static com.sbp.common.UUIDs.NOTIFICATION_DESC;
-//import static com.sbp.common.UUIDs.SERVICE1;
-//import static com.sbp.common.UUIDs.SERVICE2;
-//import static com.sbp.common.UUIDs.SERVICE_HEART_RATE;
 
-/**
- * Declares logic for connection establishment between android app and miband by Bluetooth protocol
- *
- * @author Spayker
- * @version 1.0
- * @since 06/01/2019
- */
 public class GattCallback extends BluetoothGattCallback {
 
     private HeartBeatMeasurer heartBeatMeasurer;

@@ -19,21 +19,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-//import com.example.attempt1.ui.login.Config;
-//import com.example.attempt1.ui.login.common.GattCallback;
-//import com.example.attempt1.ui.login.hr.HeartBeatMeasurer;
-
-//import com.facebook.react.bridge.Callback;
-//import com.facebook.react.bridge.ReactApplicationContext;
-//import com.facebook.react.bridge.ReactContextBaseJavaModule;
-//import com.facebook.react.bridge.ReactMethod;
-//import com.sbp.common.GattCallback;
-//import com.sbp.metric.hr.HeartBeatMeasurer;
-//import com.sbp.metric.hr.HeartBeatMeasurerPackage;
-
 import java.util.Objects;
-
-//import javax.annotation.Nonnull;
 
 import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
 import static android.content.Context.BLUETOOTH_SERVICE;
@@ -41,16 +27,7 @@ import static android.content.Context.BLUETOOTH_SERVICE;
 import com.example.myapplication.Config;
 import com.example.myapplication.common.GattCallback;
 import com.example.myapplication.hr.HeartBeatMeasurer;
-//import static com.sbp.common.ModuleStorage.getModuleStorage;
 
-/**
- *  Declares main set of methods which will be used by react UI during data fetching procedure.
- *  Last one includes only device connection. Make sure your miband device has
- *  "Allow 3-rd party connect" option ON
- * @author Spayker
- * @version 1.0
- * @since 06/01/2019
- */
 public class DeviceConnector {
 
     private String TAG = "Ranu BLE";
@@ -195,7 +172,7 @@ public class DeviceConnector {
                 .getSystemService(BLUETOOTH_SERVICE))
                 .getAdapter();
 
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice("D0:F3:3D:D8:34:6A");
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice("E3:E6:98:B0:74:67");
         setBluetoothDevice(device);
 //        HeartBeatMeasurerPackage hBMeasurerPackage = getModuleStorage().getHeartBeatMeasurerPackage();
 //        HeartBeatMeasurer heartBeatMeasurer = hBMeasurerPackage.getHeartBeatMeasurer();
