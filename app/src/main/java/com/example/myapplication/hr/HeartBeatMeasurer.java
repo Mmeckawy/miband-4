@@ -72,7 +72,6 @@ public class HeartBeatMeasurer {
         sensorChar = service1.getCharacteristic(UUID.fromString(CHAR_SENSOR));
         btGatt.setCharacteristicNotification(hrCtrlChar, true);
         btGatt.setCharacteristicNotification(hrMeasureChar, true);
-        startHrCalculation();
     }
 
 
@@ -85,7 +84,7 @@ public class HeartBeatMeasurer {
 
     //    @ReactMethod
     @SuppressLint("MissingPermission")
-    private void startHrCalculation() {
+    public void startHrCalculation() {
         sensorChar.setValue(new byte[]{0x01, 0x03, 0x19});
         btGatt.writeCharacteristic(sensorChar);
 

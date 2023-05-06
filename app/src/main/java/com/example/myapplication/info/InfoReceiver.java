@@ -62,6 +62,7 @@ public class InfoReceiver {
         if(value != null){
             byte receivedSteps = value[1];
             steps = String.valueOf(receivedSteps);
+            Log.i(TAG, "Recieved Steps: "+ receivedSteps);
         }
     }
 
@@ -74,6 +75,7 @@ public class InfoReceiver {
         if(value != null){
             byte currentSteps = value[1];
             battery = String.valueOf(currentSteps);
+            Log.i(TAG, "Battery Value: "+ currentSteps);
         }
     }
 }

@@ -132,14 +132,17 @@ public class GattCallback extends BluetoothGattCallback {
                     case "[16, 3, 1]": {
                         Log.i("Ranu BLE", "Authentication has been passed successfully"); // 7
                         heartBeatMeasurer.updateHrChars(gatt);
+                        heartBeatMeasurer.startHrCalculation();
                         infoReceiver = new InfoReceiver();
                         infoReceiver.updateInfoChars(gatt);
+
                     }
                 }
                 break;
             }
             case CHAR_HEART_RATE_MEASURE: {
                 heartBeatMeasurer.handleHeartRateData(characteristic);
+                infoReceiver.updateInfoChars(gatt);
                 break;
             }
         }
