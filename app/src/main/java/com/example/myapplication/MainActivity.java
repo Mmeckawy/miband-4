@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -17,43 +18,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.example.myapplication.bluetooth.DeviceConnector;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_CODE = 1;
-    ActivityResultLauncher<String[]> mPermissionResultLauncher;
-    private boolean isLocationFinePermissionGranted = false;
-    private boolean isLocationCoarsePermissionGranted = false;
-    private boolean isBluetoothPermissionGranted = false;
-    private boolean isBluetoothScanPermissionGranted = false;
-    private boolean isBluetoothAdminPermissionGranted = false;
-    private boolean isBluetoothConnectPermissionGranted = false;
-    private boolean isBluetoothAdvertisePermissionGranted = false;
-    public BluetoothManager bluetoothManager;
-    public LocationManager locationManager;
-    public static BluetoothAdapter bluetoothAdapter;
 
     BluetoothDevice mDevice;
+    private static final int PERMISSION_REQUEST_BLUETOOTH = 123;
 
     private BluetoothAdapter mBluetoothAdapter = null;
     static String TAG = "Ranu-BLE";
@@ -66,66 +49,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Config.context = this;
-        //requestPermissions();
-
-        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
-
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        mPermissionResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
-            @Override
-            public void onActivityResult(Map<String, Boolean> result) {
-                if (result.get(Manifest.permission.ACCESS_COARSE_LOCATION) != null) {
-                    isLocationCoarsePermissionGranted = result.get(Manifest.permission.ACCESS_COARSE_LOCATION);
-                }
-                if (result.get(Manifest.permission.ACCESS_FINE_LOCATION) != null) {
-                    isLocationFinePermissionGranted = result.get(Manifest.permission.ACCESS_FINE_LOCATION);
-                }
-//                if(result.get(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != null){
-//                    isLocationBackgroundPermissionGranted = result.get(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
-//                }
-                if (result.get(Manifest.permission.BLUETOOTH) != null) {
-                    isBluetoothPermissionGranted = result.get(Manifest.permission.BLUETOOTH);
-                }
-                if (result.get(Manifest.permission.BLUETOOTH_ADMIN) != null) {
-                    isBluetoothAdminPermissionGranted = result.get(Manifest.permission.BLUETOOTH_ADMIN);
-                }
-                if (result.get(Manifest.permission.BLUETOOTH_CONNECT) != null) {
-                    isBluetoothConnectPermissionGranted = result.get(Manifest.permission.BLUETOOTH_CONNECT);
-                }
-                if (result.get(Manifest.permission.BLUETOOTH_SCAN) != null) {
-                    isBluetoothScanPermissionGranted = result.get(Manifest.permission.BLUETOOTH_SCAN);
-                }
-                if (result.get(Manifest.permission.BLUETOOTH_ADVERTISE) != null) {
-                    isBluetoothAdvertisePermissionGranted = result.get(Manifest.permission.BLUETOOTH_ADVERTISE);
-                }
-            }
-        });
-
-        requestPermission();
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Toast.makeText(this, "Access background location not granted", Toast.LENGTH_SHORT).show();
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
-                        REQUEST_CODE);
-            }
-        }
-
-        if (!bluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(enableBtIntent);
-
-        }
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Intent enableGpsIntent = new Intent(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            enableGpsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(enableGpsIntent);
-        }
+        requestPermissions();
 
         deviceConnector = new DeviceConnector(this);
         deviceConnector.discoverDevices();
@@ -133,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter1 = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(mBroadcastReceiver1, filter1);
 
-        //this.configBLE();
+        this.configBLE();
         Log.i(TAG, "start discovering BLE device");
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
@@ -157,15 +81,8 @@ public class MainActivity extends AppCompatActivity {
                     case BluetoothAdapter.STATE_ON:
                         // Assuming here we are reconnecting
                         deviceConnector.startBonding();
-                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                            // TODO: Consider calling
-                            //    ActivityCompat#requestPermissions
-                            // here to request the missing permissions, and then overriding
-                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                            //                                          int[] grantResults)
-                            // to handle the case where the user grants the permission. See the documentation
-                            // for ActivityCompat#requestPermissions for more details.
-                            return;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            checkBluetoothPermission();
                         }
                         Log.i(TAG, "Device name: " + deviceConnector.getDevice().getName());
                         break;
@@ -183,15 +100,8 @@ public class MainActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    checkBluetoothPermission();
                 }
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
                     //means device paired
@@ -221,15 +131,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     scanning = false;
-                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        return;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        checkBluetoothPermission();
                     }
                     bluetoothLeScanner.stopScan(leScanCallback);
                 }
@@ -252,15 +155,8 @@ public class MainActivity extends AppCompatActivity {
 
 //            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
             BluetoothDevice device = result.getDevice();
-            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             mBluetoothGatt = device.connectGatt(null, false, mGattCallback);
             bluetoothLeScanner.stopScan(leScanCallback);
@@ -276,30 +172,16 @@ public class MainActivity extends AppCompatActivity {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         if (newState == BluetoothProfile.STATE_CONNECTED) {
                             Log.i(TAG, "DEVICE CONNECTED. DISCOVERING SERVICES...");
-                            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                                // TODO: Consider calling
-                                //    ActivityCompat#requestPermissions
-                                // here to request the missing permissions, and then overriding
-                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                //                                          int[] grantResults)
-                                // to handle the case where the user grants the permission. See the documentation
-                                // for ActivityCompat#requestPermissions for more details.
-                                return;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                checkBluetoothPermission();
                             }
                             mBluetoothGatt.discoverServices();
                             mBluetoothGattSuccess = gatt;
                         } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                             //Device disconnected
                             Log.i(TAG, "DEVICE DISCONNECTED");
-                            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                                // TODO: Consider calling
-                                //    ActivityCompat#requestPermissions
-                                // here to request the missing permissions, and then overriding
-                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                //                                          int[] grantResults)
-                                // to handle the case where the user grants the permission. See the documentation
-                                // for ActivityCompat#requestPermissions for more details.
-                                return;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                checkBluetoothPermission();
                             }
                             gatt.close();
                         }
@@ -395,81 +277,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void requestPermission(){
-
-        isLocationFinePermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isLocationCoarsePermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isBluetoothPermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isBluetoothConnectPermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_CONNECT
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isBluetoothAdminPermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_ADMIN
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isBluetoothScanPermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_SCAN
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        isBluetoothAdvertisePermissionGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.BLUETOOTH_ADVERTISE
-        ) == PackageManager.PERMISSION_GRANTED;
-
-        List<String> permissionRequest = new ArrayList<String>();
-
-        if(!isLocationCoarsePermissionGranted){
-            permissionRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        }
-        if(!isLocationFinePermissionGranted){
-            permissionRequest.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        }
-//        if(!isLocationBackgroundPermissionGranted){
-//            permissionRequest.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
-//        }
-        if(!isBluetoothPermissionGranted){
-            permissionRequest.add(Manifest.permission.BLUETOOTH);
-        }
-        if(!isBluetoothAdminPermissionGranted){
-            permissionRequest.add(Manifest.permission.BLUETOOTH_ADMIN);
-        }
-        if(!isBluetoothConnectPermissionGranted){
-            permissionRequest.add(Manifest.permission.BLUETOOTH_CONNECT);
-        }
-        if(!isBluetoothScanPermissionGranted){
-            permissionRequest.add(Manifest.permission.BLUETOOTH_SCAN);
-        }
-        if(!isBluetoothAdvertisePermissionGranted){
-            permissionRequest.add(Manifest.permission.BLUETOOTH_ADVERTISE);
-        }
-
-        if(!permissionRequest.isEmpty()){
-            mPermissionResultLauncher.launch(permissionRequest.toArray(new String[0]));
-        }
-
-
-        // Check if BLE is supported on the device
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            // BLE is not supported
-            Toast.makeText(this, "BLE not supported", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                1);
     }
 
     @Override
@@ -484,6 +295,19 @@ public class MainActivity extends AppCompatActivity {
                 // Permission is not granted
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    public void checkBluetoothPermission() {
+        ActivityCompat.requestPermissions((Activity) MainActivity.this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions((Activity) MainActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_REQUEST_BLUETOOTH);
+        } else {
+            // Permission already granted, do something
+            // ...
         }
     }
 }

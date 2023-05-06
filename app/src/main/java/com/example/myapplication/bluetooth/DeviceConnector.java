@@ -35,6 +35,7 @@ import java.util.Objects;
 
 //import javax.annotation.Nonnull;
 
+import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
 import static android.content.Context.BLUETOOTH_SERVICE;
 
 import com.example.myapplication.Config;
@@ -194,7 +195,7 @@ public class DeviceConnector {
                 .getSystemService(BLUETOOTH_SERVICE))
                 .getAdapter();
 
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(currentDeviceMacAddress);
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice("D0:F3:3D:D8:34:6A");
         setBluetoothDevice(device);
 //        HeartBeatMeasurerPackage hBMeasurerPackage = getModuleStorage().getHeartBeatMeasurerPackage();
 //        HeartBeatMeasurer heartBeatMeasurer = hBMeasurerPackage.getHeartBeatMeasurer();
@@ -202,7 +203,8 @@ public class DeviceConnector {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             checkBluetoothPermission();
         }
-        bluetoothGatt = bluetoothDevice.connectGatt(mainContext, isAuto, gattCallback);
+        Log.d("Ranu","Before autoconnect");
+        bluetoothGatt = device.connectGatt(mainContext, isAuto, gattCallback, TRANSPORT_LE);
     }
 
     void setBluetoothDevice(BluetoothDevice bluetoothDevice) {

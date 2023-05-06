@@ -7,6 +7,7 @@ import static com.example.myapplication.common.UUIDs.SERVICE1;
 import static com.example.myapplication.common.UUIDs.SERVICE_HEART_RATE;
 
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
@@ -17,8 +18,10 @@ import android.bluetooth.BluetoothGattService;
 //import com.facebook.react.bridge.ReactMethod;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.example.myapplication.Config;
@@ -43,6 +46,7 @@ import java.util.UUID;
 public class HeartBeatMeasurer {
 
     private String TAG = "Ranu BLE";
+    private static final int PERMISSION_REQUEST_BLUETOOTH = 123;
 
     private BluetoothGattService service1;
     private BluetoothGattService heartService;
@@ -80,15 +84,8 @@ public class HeartBeatMeasurer {
         hrMeasureChar = heartService.getCharacteristic(UUID.fromString(CHAR_HEART_RATE_MEASURE));
         sensorChar = service1.getCharacteristic(UUID.fromString(CHAR_SENSOR));
 
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
         btGatt.setCharacteristicNotification(hrCtrlChar, true);
         btGatt.setCharacteristicNotification(hrMeasureChar, true);
@@ -104,15 +101,8 @@ public class HeartBeatMeasurer {
     //    @ReactMethod
     private void startHrCalculation() {
         sensorChar.setValue(new byte[]{0x01, 0x03, 0x19});
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
         btGatt.writeCharacteristic(sensorChar);
 
@@ -124,15 +114,8 @@ public class HeartBeatMeasurer {
     //    @ReactMethod
     private void stopHrCalculation() {
         hrCtrlChar.setValue(new byte[]{0x15, 0x01, 0x00});
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
         Log.d("INFO", "hrCtrlChar: " + btGatt.writeCharacteristic(hrCtrlChar));
     }
@@ -142,15 +125,8 @@ public class HeartBeatMeasurer {
     private void getHeartRate(String currentHeartBeat) {
         if (Integer.valueOf(heartRateValue).equals(Integer.valueOf(currentHeartBeat))) {
             hrCtrlChar.setValue(new byte[]{0x16});
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             btGatt.writeCharacteristic(hrCtrlChar);
         }
@@ -166,5 +142,18 @@ public class HeartBeatMeasurer {
 
     public String getName() {
         return HeartBeatMeasurer.class.getSimpleName();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    public void checkBluetoothPermission() {
+        ActivityCompat.requestPermissions((Activity) this.context,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions((Activity) this.context, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_REQUEST_BLUETOOTH);
+        } else {
+            // Permission already granted, do something
+            // ...
+        }
     }
 }

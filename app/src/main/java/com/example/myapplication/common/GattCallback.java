@@ -13,6 +13,7 @@ import static com.example.myapplication.common.UUIDs.SERVICE2;
 import static com.example.myapplication.common.UUIDs.SERVICE_HEART_RATE;
 
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -20,6 +21,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
 //import com.sbp.info.InfoReceiver;
@@ -28,6 +30,7 @@ import android.util.Log;
 //import com.example.attempt1.ui.login.hr.HeartBeatMeasurer;
 //import com.example.attempt1.ui.login.info.InfoReceiver;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.example.myapplication.Config;
@@ -76,6 +79,8 @@ public class GattCallback extends BluetoothGattCallback {
     private BluetoothGattCharacteristic batteryChar;
     private Context context;
 
+    private static final int PERMISSION_REQUEST_BLUETOOTH = 123;
+
     public GattCallback(HeartBeatMeasurer heartBeatMeasurer, Context context) {
         this.heartBeatMeasurer = heartBeatMeasurer;
         this.context = Config.context;
@@ -90,15 +95,8 @@ public class GattCallback extends BluetoothGattCallback {
             case BluetoothGatt.STATE_CONNECTED: {
                 Log.i("Ranu BLE", "Connected with device");
                 Log.i("Ranu BLE", "Discovering services");
-                if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    checkBluetoothPermission();
                 }
                 gatt.discoverServices();
             }
@@ -127,29 +125,16 @@ public class GattCallback extends BluetoothGattCallback {
 
     private void authoriseMiBand(BluetoothGatt gatt) {
         Log.i("Ranu BLE", "Enabling Auth Service notifications status...");
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
         gatt.setCharacteristicNotification(authChar, true);                 // 1
         Log.i("Ranu BLE", "Found NOTIFICATION BluetoothGattDescriptor: " + authDesc.toString());
         authDesc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);       // 2
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkBluetoothPermission();
         }
+        Log.d("Ranu", "auth Descriptor:" + gatt.writeDescriptor(authDesc));
         gatt.writeDescriptor(authDesc);                                             // 2
     }
 
@@ -164,15 +149,8 @@ public class GattCallback extends BluetoothGattCallback {
                 switch (Arrays.toString(charValue)) {
                     case "[16, 1, 1]": {
                         authChar.setValue(new byte[]{0x02, 0x00}); //4
-                        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                            // TODO: Consider calling
-                            //    ActivityCompat#requestPermissions
-                            // here to request the missing permissions, and then overriding
-                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                            //                                          int[] grantResults)
-                            // to handle the case where the user grants the permission. See the documentation
-                            // for ActivityCompat#requestPermissions for more details.
-                            return;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            checkBluetoothPermission();
                         }
                         gatt.writeCharacteristic(authChar); //4
                         break;
@@ -182,7 +160,7 @@ public class GattCallback extends BluetoothGattCallback {
                         executeAuthorisationSequence(gatt, characteristic); //5
                         break;
                     }
-                    case "[16, 3, 1]": {
+                    case "[16, 1, -127]": {
                         Log.i("Ranu BLE", "Authentication has been passed successfully"); // 7
                         heartBeatMeasurer.updateHrChars(gatt);
                         infoReceiver = new InfoReceiver(this.context);
@@ -205,15 +183,8 @@ public class GattCallback extends BluetoothGattCallback {
         switch (characteristic.getUuid().toString()) {
             case CHAR_STEPS: {
                 infoReceiver.handleInfoData(characteristic.getValue());
-                if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    checkBluetoothPermission();
                 }
                 gatt.readCharacteristic(batteryChar);
                 break;
@@ -231,17 +202,10 @@ public class GattCallback extends BluetoothGattCallback {
                 switch (Arrays.toString(characteristic.getValue())) {
                     // for real time HR measurement [1, 3, 19] was sent actually but [1, 3, 25]
                     // is written. Magic?
-                    case "[1, 3, 25]": {
+                    case "[1,3,25]": {
                         hrDescChar.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                            // TODO: Consider calling
-                            //    ActivityCompat#requestPermissions
-                            // here to request the missing permissions, and then overriding
-                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                            //                                          int[] grantResults)
-                            // to handle the case where the user grants the permission. See the documentation
-                            // for ActivityCompat#requestPermissions for more details.
-                            return;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            checkBluetoothPermission();
                         }
                         gatt.writeDescriptor(hrDescChar);
                     }
@@ -259,15 +223,8 @@ public class GattCallback extends BluetoothGattCallback {
             case CHAR_AUTH: {
                 byte[] authKey = ArrayUtils.addAll(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, AUTH_CHAR_KEY);
                 authChar.setValue(authKey);             // 3
-                if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    checkBluetoothPermission();
                 }
                 gatt.writeCharacteristic(authChar);     // 3
                 break;
@@ -290,15 +247,8 @@ public class GattCallback extends BluetoothGattCallback {
         byte[] value = characteristic.getValue();
         if (value[0] == 16 && value[1] == 1 && value[2] == 1) {
             characteristic.setValue(new byte[]{0x02, 0x8});
-            if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                checkBluetoothPermission();
             }
             gatt.writeCharacteristic(characteristic);
         } else if (value[0] == 16 && value[1] == 2 && value[2] == 1) {
@@ -325,6 +275,19 @@ public class GattCallback extends BluetoothGattCallback {
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         Log.d("onDescriptorRead", descriptor.getUuid().toString() + " Read" + "status: " + status);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    public void checkBluetoothPermission() {
+        ActivityCompat.requestPermissions((Activity) this.context,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions((Activity) this.context, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_REQUEST_BLUETOOTH);
+        } else {
+            // Permission already granted, do something
+            // ...
+        }
     }
 
 }

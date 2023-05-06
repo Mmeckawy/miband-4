@@ -42,7 +42,7 @@ public class DeviceScanCallback extends ScanCallback {
         }
 
         if(discoveredDevices.containsValue(deviceMacAddress)){
-            Log.d("TAG", "Device with mac: " + deviceMacAddress + " already discovered");
+            Log.d("Ranu", "Device with mac: " + deviceMacAddress + " already discovered");
         } else {
             discoveredDevices.put(deviceName, deviceMacAddress);
         }
