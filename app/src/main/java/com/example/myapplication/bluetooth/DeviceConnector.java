@@ -104,7 +104,7 @@ public class DeviceConnector {
                 .getSystemService(BLUETOOTH_SERVICE))
                 .getAdapter();
 
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice("E3:E6:98:B0:74:67");
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice("D0:F3:3D:D8:34:6A"); //E3:E6:98:B0:74:67 //D0:F3:3D:D8:34:6A
         setBluetoothDevice(device);
         gattCallback = new GattCallback(heartBeatMeasurer);
         bluetoothGatt = device.connectGatt(mainContext, isAuto, gattCallback, TRANSPORT_LE);
