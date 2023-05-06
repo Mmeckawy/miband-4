@@ -8,14 +8,13 @@ You need to get the unique authentication key for your mi band 4 in order to be 
 
 Then, put the obtained key in UUID.java
 
-<br>
-If you reset the band, the authentication key will change.
+*** If you reset the band, the authentication key will change. ***
 
 
 ## Resources used:
 
 <ul>
-  <li> https://github.com/Mmeckawy/miband-sdk-android </li>
+  <li> https://github.com/pangliang/miband-sdk-android </li>
   <li> https://github.com/Spayker/rn-miband-connector </li>
   <li> https://github.com/ictinnovaties-zorg/openwindesheart </li>
 </ul>
