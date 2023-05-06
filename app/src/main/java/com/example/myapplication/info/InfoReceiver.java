@@ -4,6 +4,7 @@ import static com.example.myapplication.common.UUIDs.CHAR_STEPS;
 import static com.example.myapplication.common.UUIDs.SERVICE1;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -26,34 +27,26 @@ public class InfoReceiver {
     private BluetoothGattCharacteristic stepsChar;
 
     private BluetoothGatt btGatt;
-    private Context context;
     private String steps = "0";
     private String battery = "0";
 
-    private static final int PERMISSION_REQUEST_BLUETOOTH = 123;
-
-    public InfoReceiver(Context context) {
-        this.context = Config.context;
+    public InfoReceiver() {
 
     }
 
+    @SuppressLint("MissingPermission")
     public void updateInfoChars(BluetoothGatt gatt) {
         this.btGatt = gatt;
         BluetoothGattService service1 = btGatt.getService(UUID.fromString(SERVICE1));
         stepsChar = service1.getCharacteristic(UUID.fromString(CHAR_STEPS));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            checkBluetoothPermission();
-        }
         btGatt.readCharacteristic(stepsChar);
     }
 
 
     //    @ReactMethod
+    @SuppressLint("MissingPermission")
     private void getInfo() {
         if (btGatt != null && stepsChar != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                checkBluetoothPermission();
-            }
             btGatt.readCharacteristic(stepsChar);
         }
 //        successCallback.invoke(null, steps, battery);
@@ -81,25 +74,6 @@ public class InfoReceiver {
         if(value != null){
             byte currentSteps = value[1];
             battery = String.valueOf(currentSteps);
-        }
-    }
-
-//    @Nonnull
-//    @Override
-//    public String getName() {
-//        return InfoReceiver.class.getSimpleName();
-//    }
-
-    @RequiresApi(api = Build.VERSION_CODES.S)
-    public void checkBluetoothPermission() {
-        ActivityCompat.requestPermissions((Activity) this.context,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted, request it
-            ActivityCompat.requestPermissions((Activity) this.context, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_REQUEST_BLUETOOTH);
-        } else {
-            // Permission already granted, do something
-            // ...
         }
     }
 }

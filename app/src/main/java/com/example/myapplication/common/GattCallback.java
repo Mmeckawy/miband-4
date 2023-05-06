@@ -13,6 +13,7 @@ import static com.example.myapplication.common.UUIDs.SERVICE2;
 import static com.example.myapplication.common.UUIDs.SERVICE_HEART_RATE;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -45,26 +46,9 @@ import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-//
-//import static com.sbp.common.ModuleStorage.getModuleStorage;
-//import static com.sbp.common.UUIDs.AUTH_CHAR_KEY;
-//import static com.sbp.common.UUIDs.CHAR_AUTH;
-//import static com.sbp.common.UUIDs.CHAR_BATTERY;
-//import static com.sbp.common.UUIDs.CHAR_HEART_RATE_CONTROL;
-//import static com.sbp.common.UUIDs.CHAR_HEART_RATE_MEASURE;
-//import static com.sbp.common.UUIDs.CHAR_SENSOR;
-//import static com.sbp.common.UUIDs.CHAR_STEPS;
-//import static com.sbp.common.UUIDs.NOTIFICATION_DESC;
-//import static com.sbp.common.UUIDs.SERVICE1;
-//import static com.sbp.common.UUIDs.SERVICE2;
-//import static com.sbp.common.UUIDs.SERVICE_HEART_RATE;
 
 /**
  * Declares logic for connection establishment between android app and miband by Bluetooth protocol
- *
- * @author Spayker
- * @version 1.0
- * @since 06/01/2019
  */
 public class GattCallback extends BluetoothGattCallback {
 
@@ -77,15 +61,12 @@ public class GattCallback extends BluetoothGattCallback {
     private BluetoothGattCharacteristic hrCtrlChar;
     private BluetoothGattDescriptor hrDescChar;
     private BluetoothGattCharacteristic batteryChar;
-    private Context context;
 
-    private static final int PERMISSION_REQUEST_BLUETOOTH = 123;
-
-    public GattCallback(HeartBeatMeasurer heartBeatMeasurer, Context context) {
+    public GattCallback(HeartBeatMeasurer heartBeatMeasurer) {
         this.heartBeatMeasurer = heartBeatMeasurer;
-        this.context = Config.context;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         switch (newState) {
@@ -95,9 +76,6 @@ public class GattCallback extends BluetoothGattCallback {
             case BluetoothGatt.STATE_CONNECTED: {
                 Log.i("Ranu BLE", "Connected with device");
                 Log.i("Ranu BLE", "Discovering services");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    checkBluetoothPermission();
-                }
                 gatt.discoverServices();
             }
             break;
@@ -114,7 +92,6 @@ public class GattCallback extends BluetoothGattCallback {
         BluetoothGattService service1 = gatt.getService(UUID.fromString(SERVICE1));
         BluetoothGattService service2 = gatt.getService(UUID.fromString(SERVICE2));
         BluetoothGattService heartService = gatt.getService(UUID.fromString(SERVICE_HEART_RATE));
-
         authChar = service2.getCharacteristic(UUID.fromString(CHAR_AUTH));
         hrCtrlChar = heartService.getCharacteristic(UUID.fromString(CHAR_HEART_RATE_CONTROL));
         BluetoothGattCharacteristic hrMeasureChar = heartService.getCharacteristic(UUID.fromString(CHAR_HEART_RATE_MEASURE));
@@ -123,21 +100,17 @@ public class GattCallback extends BluetoothGattCallback {
         authDesc = authChar.getDescriptor(UUID.fromString(NOTIFICATION_DESC));
     }
 
+    @SuppressLint("MissingPermission")
     private void authoriseMiBand(BluetoothGatt gatt) {
         Log.i("Ranu BLE", "Enabling Auth Service notifications status...");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            checkBluetoothPermission();
-        }
         gatt.setCharacteristicNotification(authChar, true);                 // 1
         Log.i("Ranu BLE", "Found NOTIFICATION BluetoothGattDescriptor: " + authDesc.toString());
         authDesc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);       // 2
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            checkBluetoothPermission();
-        }
         Log.d("Ranu", "auth Descriptor:" + gatt.writeDescriptor(authDesc));
         gatt.writeDescriptor(authDesc);                                             // 2
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         Log.i("Ranu BLE", "onCharacteristicChanged char uuid: " + characteristic.getUuid().toString()
@@ -149,13 +122,9 @@ public class GattCallback extends BluetoothGattCallback {
                 switch (Arrays.toString(charValue)) {
                     case "[16, 1, -127]": {
                         authChar.setValue(new byte[]{0x02, 0x00}); //4
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            checkBluetoothPermission();
-                        }
                         gatt.writeCharacteristic(authChar); //4
                         break;
                     }
-                    case "[16, 3, 4]":
                     case "[16, 2, 1]": {
                         executeAuthorisationSequence(gatt, characteristic); //5
                         break;
@@ -163,7 +132,7 @@ public class GattCallback extends BluetoothGattCallback {
                     case "[16, 3, 1]": {
                         Log.i("Ranu BLE", "Authentication has been passed successfully"); // 7
                         heartBeatMeasurer.updateHrChars(gatt);
-                        infoReceiver = new InfoReceiver(this.context);
+                        infoReceiver = new InfoReceiver();
                         infoReceiver.updateInfoChars(gatt);
                     }
                 }
@@ -176,6 +145,7 @@ public class GattCallback extends BluetoothGattCallback {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         Log.i("ranu", "onCharacteristicRead uuid: " + characteristic.getUuid().toString()
@@ -183,9 +153,6 @@ public class GattCallback extends BluetoothGattCallback {
         switch (characteristic.getUuid().toString()) {
             case CHAR_STEPS: {
                 infoReceiver.handleInfoData(characteristic.getValue());
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    checkBluetoothPermission();
-                }
                 gatt.readCharacteristic(batteryChar);
                 break;
             }
@@ -195,6 +162,7 @@ public class GattCallback extends BluetoothGattCallback {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         switch (characteristic.getUuid().toString()) {
@@ -205,9 +173,6 @@ public class GattCallback extends BluetoothGattCallback {
                     // is written. Magic?
                     case "[1, 3, 25]": {
                         hrDescChar.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            checkBluetoothPermission();
-                        }
                         gatt.writeDescriptor(hrDescChar);
                     }
                 }
@@ -218,15 +183,13 @@ public class GattCallback extends BluetoothGattCallback {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         switch (descriptor.getCharacteristic().getUuid().toString()) {
             case CHAR_AUTH: {
                 byte[] authKey = ArrayUtils.addAll(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, AUTH_CHAR_KEY);
                  authChar.setValue(authKey);             // 3
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    checkBluetoothPermission();
-                }
                 Log.d("ranu", "onDescriptorWrite: " + gatt.writeCharacteristic(authChar));
                 gatt.writeCharacteristic(authChar);     // 3
                 break;
@@ -245,13 +208,11 @@ public class GattCallback extends BluetoothGattCallback {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private void executeAuthorisationSequence(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         byte[] value = characteristic.getValue();
         if (value[0] == 16 && value[1] == 1 && value[2] == -127) {
             characteristic.setValue(new byte[]{0x02, 0x8});
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                checkBluetoothPermission();
-            }
             gatt.writeCharacteristic(characteristic);
         } else if (value[0] == 16 && value[1] == 2 && value[2] == 1) {
             try {
@@ -277,19 +238,6 @@ public class GattCallback extends BluetoothGattCallback {
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         Log.d("onDescriptorRead", descriptor.getUuid().toString() + " Read" + "status: " + status);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.S)
-    public void checkBluetoothPermission() {
-        ActivityCompat.requestPermissions((Activity) this.context,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1);
-        if (ActivityCompat.checkSelfPermission(this.context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted, request it
-            ActivityCompat.requestPermissions((Activity) this.context, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, PERMISSION_REQUEST_BLUETOOTH);
-        } else {
-            // Permission already granted, do something
-            // ...
-        }
     }
 
 }
