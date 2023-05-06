@@ -72,6 +72,7 @@ public class HeartBeatMeasurer {
         sensorChar = service1.getCharacteristic(UUID.fromString(CHAR_SENSOR));
         btGatt.setCharacteristicNotification(hrCtrlChar, true);
         btGatt.setCharacteristicNotification(hrMeasureChar, true);
+        startHrCalculation();
     }
 
 
