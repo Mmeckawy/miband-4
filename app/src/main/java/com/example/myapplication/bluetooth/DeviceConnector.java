@@ -174,14 +174,11 @@ public class DeviceConnector {
 
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice("E3:E6:98:B0:74:67"); //E3:E6:98:B0:74:67 //D0:F3:3D:D8:34:6A
         setBluetoothDevice(device);
-//        HeartBeatMeasurerPackage hBMeasurerPackage = getModuleStorage().getHeartBeatMeasurerPackage();
-//        HeartBeatMeasurer heartBeatMeasurer = hBMeasurerPackage.getHeartBeatMeasurer();
         gattCallback = new GattCallback(heartBeatMeasurer);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             checkBluetoothPermission();
         }
-        Log.d("Ranu","Before autoconnect");
-        bluetoothGatt = device.connectGatt(mainContext, isAuto, gattCallback, TRANSPORT_LE);
+        bluetoothGatt = device.connectGatt(mainContext, true, gattCallback, TRANSPORT_LE);
     }
 
     void setBluetoothDevice(BluetoothDevice bluetoothDevice) {

@@ -67,9 +67,16 @@ public class InfoReceiver {
      */
     public void handleInfoData(final byte[] value) {
         if(value != null){
-            int receivedSteps = (value[2] * 256) + value[1];
-            steps = String.valueOf(receivedSteps);
-            Log.i(TAG, "Recieved Steps: "+ receivedSteps);
+            if(value[1] < 0) {
+                int receivedSteps = ((value[2] + 1) * 256) + value[1];
+                steps = String.valueOf(receivedSteps);
+                Log.i(TAG, "Recieved Steps: " + receivedSteps);
+            }
+            else{
+                int receivedSteps = (value[2] * 256) + value[1];
+                steps = String.valueOf(receivedSteps);
+                Log.i(TAG, "Recieved Steps: " + receivedSteps);
+            }
         }
     }
 
